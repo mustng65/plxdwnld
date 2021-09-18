@@ -63,6 +63,7 @@ if (typeof plxDwnld === "undefined") {
         };
 
         const getDownloadUrl = function(xml) {
+            console.log(xml)
             const partKeyNode = xml.evaluate(partKeyXpath, xml, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
 
             if (partKeyNode.singleNodeValue) {
